@@ -1,50 +1,125 @@
 import React from 'react';
-import { range } from 'd3';
-import Rocket from './Rocket';
-import Flare from './Flare';
+import { range, randomUniform } from 'd3';
+import RocketFlare from './RocketFlare';
+import Firework from './Firework';
+import Spiral from './Spiral';
+import Message from './Message';
 
 const svgWidth = window.innerWidth;
 const svgHeight = window.innerHeight;
 
+const wrapperStyle = {
+  overflow: 'hidden',
+  position: 'fixed',
+};
+
+const colors = [
+  '#f09d19', '#ffdb9b',
+  '#c48294', '#4f6db2', 
+  '#7b1d31', '#e7e7e7',
+  '#dc8249', '#68c8af',
+  '#d92192', '#0123a7',
+  '#fb1243', '#74d2a8', 
+  '#6f8df8', '#d9bfce', 
+  '#ff0621', '#f69202',
+];
+
 class App extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      flareCount: 1,
-    };
+  state = {
+    rockets: [0],
   }
 
-  componentDidMount() {
-    // d3 timer
-    // generate flare 
-    // clear dom at desired tick
-    // let tick = 0;
-    // setInterval(() => {
-    //   tick += 1;
+  addRocket = () => {
+    setTimeout(() => {
+      this.setState({
+        rockets: [...this.state.rockets, this.state.rockets.length]
+      })
+    }, 5000)
+  }
 
-    //   this.setState({ flareCount: this.state.flareCount + 1 });
-      
-    //   if (tick % 5 === 0) {
-    //     this.setState({ flareCount: 0 });
-    //   };
+  addFirework = () => {
+    this.setState({
+      rockets: [...this.state.rockets, this.state.rockets.length]
+    })
+  }
 
-    // }, 2000);
-    // using line horizontal for path tweening AWESOME
+  generateColor = () => {
+    const colorRange = range(Math.ceil(randomUniform(1, 4)()));
+    return colorRange.map(d => {
+      const key = Math.ceil(randomUniform(0, colors.length -1)());
+      return colors[key];
+    })
+  }
+
+  renderFireWorks = (key, color, { source, target }) => {
+    return (
+      <Firework 
+        key={key}
+        colors={color}
+        source={source}
+        target={target}
+        addFirework={this.addFirework}
+      />
+    )
+  }
+
+  renderRocketFlare = (key, color, { source, target }) => {
+    return (
+      <RocketFlare 
+        key={key} 
+        colors={color}
+        source={source}
+        target={target}
+        addRocket={this.addRocket}
+      />
+    );
+  }
+
+  renderSpiral = (key, color, {source, target}) => {
+    return (
+      <Spiral
+        key={key}
+        colors={color}
+        source={source}
+        target={target}
+        addSpiral={this.addFirework}
+      />
+    );
   }
 
   render() {
-    const { flareCount } = this.state;
+    const color = this.generateColor();
+
+    const elementType = [
+      this.renderFireWorks,
+      this.renderRocketFlare,
+      this.renderSpiral,
+    ];
+    
+    const source = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight,
+    };
+
+    const target = {
+      x: window.innerWidth / 2,      
+      y: window.innerHeight * 0.4,
+    };
+
+    const position = { source, target };
+    
     return (
-      <svg width={svgWidth} height={svgHeight}>
-        <rect x={0} y={0} width={svgWidth} height={svgHeight} fill="black" />
-        {/* {range(flareCount).map((d) => 
-          <Flare 
-            key={d}
-            scheme={d}
-          />
-        )} */}
-        <Rocket />
-      </svg>
+      <div style={wrapperStyle}>
+        <svg width={svgWidth} height={svgHeight}>
+          <rect x={0} y={0} width={svgWidth} height={svgHeight} fill="#272631" />
+          {this.state.rockets.map(d => {
+            const lastIndex = d + 1 === this.state.rockets.length;
+            const elementKey = d % 3;
+            return lastIndex && elementType[elementKey](d, color, position);
+          })}
+        </svg>
+        <Message />
+      </div>
     );
   }
 };
